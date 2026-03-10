@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const userRoutes = require('./routes/user');
+const categoryRoutes = require('./routes/category');
 
 const app = express();
 
@@ -12,6 +13,7 @@ app.use(express.json());  // 让服务器能解析 JSON 格式的请求体
 
 // 路由
 app.use('/api/users', userRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // 健康检查接口 - 用来测试服务器是否正常运行
 app.get('/api/health', (req, res) => {
