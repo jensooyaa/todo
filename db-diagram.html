@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Todo App - Database ER Diagram</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #1a1a3e, #24243e);
+    min-height: 100vh;
+    color: #e0e0e0;
+    overflow: auto;
+  }
+  h1 {
+    text-align: center;
+    padding: 30px 20px 10px;
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #a78bfa, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 13px;
+    color: #7c7c9a;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+  #canvas-container {
+    position: relative;
+    width: 1100px;
+    height: 720px;
+    margin: 0 auto 40px;
+  }
+  @media (max-width: 1140px) {
+    #canvas-container {
+      transform-origin: top center;
+      transform: scale(calc(100vw / 1140));
+    }
+  }
+  svg#connections {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .table-card {
+    position: absolute;
+    background: linear-gradient(145deg, #1e1e3a, #2a2a4a);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 12px;
+    min-width: 200px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(139,92,246,0.06);
+    z-index: 1;
+    overflow: hidden;
+    transition: box-shadow 0.3s, transform 0.3s;
+  }
+  .table-card:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 30px rgba(139,92,246,0.15);
+    transform: translateY(-2px);
+  }
+  .table-header {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .table-header .icon {
+    width: 20px; height: 20px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+  .table-row {
+    display: flex;
+    align-items: center;
+    padding: 7px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    gap: 8px;
+  }
+  .table-row:last-child { border-bottom: none; }
+  .badge {
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .badge-pk {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+  }
+  .badge-fk {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+  }
+  .col-name {
+    color: #e2e8f0;
+    font-weight: 500;
+    flex: 1;
+  }
+  .col-type {
+    color: #818cf8;
+    font-size: 11px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    flex-shrink: 0;
+  }
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 0 20px 30px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #9ca3af;
+  }
+  .legend-color {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+  }
+  .legend-line {
+    width: 30px; height: 2px;
+  }
+  marker#arrowhead { overflow: visible; }
+</style>
+</head>
+<body>
+
+<h1>Database Entity-Relationship Diagram</h1>
+<p class="subtitle">TODO FULLSTACK APPLICATION</p>
+
+<div id="canvas-container">
+  <svg id="connections"></svg>
+  <!-- Tables will be injected by JS -->
+</div>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-color" style="background:linear-gradient(135deg,#f59e0b,#d97706)"></div>
+    PK - Primary Key
+  </div>
+  <div class="legend-item">
+    <div class="legend-color" style="background:linear-gradient(135deg,#3b82f6,#2563eb)"></div>
+    FK - Foreign Key
+  </div>
+  <div class="legend-item">
+    <div class="legend-line" style="background:#7c3aed"></div>
+    1:N &mdash; ON DELETE CASCADE
+  </div>
+  <div class="legend-item">
+    <div class="legend-line" style="background:#38bdf8; border-top: 2px dashed #38bdf8; height:0"></div>
+    1:N &mdash; ON DELETE SET NULL
+  </div>
+</div>
+
+<script>
+const tables = [
+  {
+    name: 'users',
+    x: 80, y: 220,
+    columns: [
+      { name: 'id', type: 'INT', pk: true },
+      { name: 'username', type: 'VARCHAR' },
+      { name: 'password', type: 'VARCHAR' },
+      { name: 'created_at', type: 'TIMESTAMP' },
+    ]
+  },
+  {
+    name: 'categories',
+    x: 420, y: 40,
+    columns: [
+      { name: 'id', type: 'INT', pk: true },
+      { name: 'name', type: 'VARCHAR' },
+      { name: 'user_id', type: 'INT', fk: 'users' },
+      { name: 'created_at', type: 'TIMESTAMP' },
+    ]
+  },
+  {
+    name: 'todos',
+    x: 420, y: 270,
+    columns: [
+      { name: 'id', type: 'INT', pk: true },
+      { name: 'title', type: 'VARCHAR' },
+      { name: 'completed', type: 'TINYINT' },
+      { name: 'priority', type: 'ENUM' },
+      { name: 'deadline', type: 'DATE' },
+      { name: 'user_id', type: 'INT', fk: 'users' },
+      { name: 'category_id', type: 'INT', fk: 'categories' },
+      { name: 'created_at', type: 'TIMESTAMP' },
+    ]
+  },
+  {
+    name: 'subtasks',
+    x: 820, y: 80,
+    columns: [
+      { name: 'id', type: 'INT', pk: true },
+      { name: 'title', type: 'VARCHAR' },
+      { name: 'completed', type: 'TINYINT' },
+      { name: 'todo_id', type: 'INT', fk: 'todos' },
+      { name: 'created_at', type: 'TIMESTAMP' },
+    ]
+  },
+  {
+    name: 'comments',
+    x: 820, y: 420,
+    columns: [
+      { name: 'id', type: 'INT', pk: true },
+      { name: 'content', type: 'TEXT' },
+      { name: 'todo_id', type: 'INT', fk: 'todos' },
+      { name: 'user_id', type: 'INT', fk: 'users' },
+      { name: 'created_at', type: 'TIMESTAMP' },
+    ]
+  }
+];
+
+const relationships = [
+  { from: 'users',      to: 'categories', label: '1 : N', onDelete: 'CASCADE' },
+  { from: 'users',      to: 'todos',      label: '1 : N', onDelete: 'CASCADE' },
+  { from: 'users',      to: 'comments',   label: '1 : N', onDelete: 'CASCADE' },
+  { from: 'categories', to: 'todos',      label: '1 : N', onDelete: 'SET NULL' },
+  { from: 'todos',      to: 'subtasks',   label: '1 : N', onDelete: 'CASCADE' },
+  { from: 'todos',      to: 'comments',   label: '1 : N', onDelete: 'CASCADE' },
+];
+
+const container = document.getElementById('canvas-container');
+const svg = document.getElementById('connections');
+const ROW_H = 30;
+const HEADER_H = 40;
+
+// Render table cards
+const cardEls = {};
+tables.forEach(t => {
+  const card = document.createElement('div');
+  card.className = 'table-card';
+  card.style.left = t.x + 'px';
+  card.style.top = t.y + 'px';
+  card.id = 'table-' + t.name;
+
+  let html = `<div class="table-header"><div class="icon">T</div>${t.name}</div>`;
+  t.columns.forEach(c => {
+    let badges = '';
+    if (c.pk) badges += '<span class="badge badge-pk">PK</span>';
+    if (c.fk) badges += '<span class="badge badge-fk">FK</span>';
+    html += `<div class="table-row">${badges}<span class="col-name">${c.name}</span><span class="col-type">${c.type}</span></div>`;
+  });
+  card.innerHTML = html;
+  container.appendChild(card);
+  cardEls[t.name] = card;
+});
+
+// Helper: get anchor point on the edge of a card for a connection
+function getAnchor(tableName, side) {
+  const el = cardEls[tableName];
+  const x = parseInt(el.style.left);
+  const y = parseInt(el.style.top);
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  const cy = y + h / 2;
+  const cx = x + w / 2;
+  if (side === 'right') return { x: x + w, y: cy };
+  if (side === 'left')  return { x: x,     y: cy };
+  if (side === 'top')   return { x: cx,    y: y };
+  if (side === 'bottom') return { x: cx,   y: y + h };
+  return { x: cx, y: cy };
+}
+
+function getCardRect(name) {
+  const el = cardEls[name];
+  return {
+    x: parseInt(el.style.left),
+    y: parseInt(el.style.top),
+    w: el.offsetWidth,
+    h: el.offsetHeight
+  };
+}
+
+// Determine best sides for connection
+function bestSides(fromName, toName) {
+  const a = getCardRect(fromName);
+  const b = getCardRect(toName);
+  const acx = a.x + a.w / 2, acy = a.y + a.h / 2;
+  const bcx = b.x + b.w / 2, bcy = b.y + b.h / 2;
+  const dx = bcx - acx, dy = bcy - acy;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    return dx > 0 ? ['right', 'left'] : ['left', 'right'];
+  } else {
+    return dy > 0 ? ['bottom', 'top'] : ['top', 'bottom'];
+  }
+}
+
+// Draw connections after layout
+setTimeout(() => {
+  const ns = 'http://www.w3.org/2000/svg';
+
+  // Arrowhead marker
+  const defs = document.createElementNS(ns, 'defs');
+
+  function makeMarker(id, color) {
+    const marker = document.createElementNS(ns, 'marker');
+    marker.setAttribute('id', id);
+    marker.setAttribute('viewBox', '0 0 10 7');
+    marker.setAttribute('refX', '10');
+    marker.setAttribute('refY', '3.5');
+    marker.setAttribute('markerWidth', '10');
+    marker.setAttribute('markerHeight', '7');
+    marker.setAttribute('orient', 'auto-start-reverse');
+    const poly = document.createElementNS(ns, 'polygon');
+    poly.setAttribute('points', '0 0, 10 3.5, 0 7');
+    poly.setAttribute('fill', color);
+    marker.appendChild(poly);
+    defs.appendChild(marker);
+  }
+
+  function makeCircle(id, color) {
+    const marker = document.createElementNS(ns, 'marker');
+    marker.setAttribute('id', id);
+    marker.setAttribute('viewBox', '0 0 10 10');
+    marker.setAttribute('refX', '5');
+    marker.setAttribute('refY', '5');
+    marker.setAttribute('markerWidth', '8');
+    marker.setAttribute('markerHeight', '8');
+    marker.setAttribute('orient', 'auto');
+    const circle = document.createElementNS(ns, 'circle');
+    circle.setAttribute('cx', '5');
+    circle.setAttribute('cy', '5');
+    circle.setAttribute('r', '4');
+    circle.setAttribute('fill', color);
+    marker.appendChild(circle);
+    defs.appendChild(marker);
+  }
+
+  makeMarker('arrow-purple', '#a78bfa');
+  makeMarker('arrow-cyan', '#38bdf8');
+  makeCircle('dot-purple', '#a78bfa');
+  makeCircle('dot-cyan', '#38bdf8');
+
+  svg.appendChild(defs);
+
+  // Offset tracker per side per table to avoid overlap
+  const sideOffsets = {};
+  function getOffset(table, side) {
+    const key = table + '-' + side;
+    if (!sideOffsets[key]) sideOffsets[key] = 0;
+    sideOffsets[key]++;
+    return (sideOffsets[key] - 1) * 20 - 10;
+  }
+
+  relationships.forEach(rel => {
+    const [fromSide, toSide] = bestSides(rel.from, rel.to);
+    const isCascade = rel.onDelete === 'CASCADE';
+    const color = isCascade ? '#a78bfa' : '#38bdf8';
+    const arrowId = isCascade ? 'arrow-purple' : 'arrow-cyan';
+    const dotId = isCascade ? 'dot-purple' : 'dot-cyan';
+
+    const fromOff = getOffset(rel.from, fromSide);
+    const toOff = getOffset(rel.to, toSide);
+
+    const p1 = getAnchor(rel.from, fromSide);
+    const p2 = getAnchor(rel.to, toSide);
+
+    // Apply offset perpendicular to the side
+    if (fromSide === 'right' || fromSide === 'left') { p1.y += fromOff; }
+    else { p1.x += fromOff; }
+    if (toSide === 'right' || toSide === 'left') { p2.y += toOff; }
+    else { p2.x += toOff; }
+
+    // Cubic bezier control points
+    const dist = Math.max(60, Math.abs(p2.x - p1.x) * 0.4, Math.abs(p2.y - p1.y) * 0.4);
+    let c1 = { ...p1 }, c2 = { ...p2 };
+    if (fromSide === 'right')  c1.x += dist;
+    if (fromSide === 'left')   c1.x -= dist;
+    if (fromSide === 'bottom') c1.y += dist;
+    if (fromSide === 'top')    c1.y -= dist;
+    if (toSide === 'right')    c2.x += dist;
+    if (toSide === 'left')     c2.x -= dist;
+    if (toSide === 'bottom')   c2.y += dist;
+    if (toSide === 'top')      c2.y -= dist;
+
+    const path = document.createElementNS(ns, 'path');
+    const d = `M ${p1.x} ${p1.y} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${p2.x} ${p2.y}`;
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '2');
+    if (!isCascade) path.setAttribute('stroke-dasharray', '6 4');
+    path.setAttribute('marker-end', `url(#${arrowId})`);
+    path.setAttribute('marker-start', `url(#${dotId})`);
+    svg.appendChild(path);
+
+    // Label on curve midpoint
+    const mx = (p1.x + 3*c1.x + 3*c2.x + p2.x) / 8;
+    const my = (p1.y + 3*c1.y + 3*c2.y + p2.y) / 8;
+
+    // Background rect for label
+    const labelGroup = document.createElementNS(ns, 'g');
+
+    const rect = document.createElementNS(ns, 'rect');
+    rect.setAttribute('rx', '4');
+    rect.setAttribute('ry', '4');
+    rect.setAttribute('fill', '#1a1a3e');
+    rect.setAttribute('stroke', color);
+    rect.setAttribute('stroke-width', '1');
+    rect.setAttribute('opacity', '0.95');
+
+    const text = document.createElementNS(ns, 'text');
+    text.setAttribute('x', mx);
+    text.setAttribute('y', my);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('dominant-baseline', 'middle');
+    text.setAttribute('fill', color);
+    text.setAttribute('font-size', '10');
+    text.setAttribute('font-family', 'Segoe UI, sans-serif');
+    text.setAttribute('font-weight', '600');
+    text.textContent = rel.label;
+
+    svg.appendChild(path);
+    labelGroup.appendChild(rect);
+    labelGroup.appendChild(text);
+    svg.appendChild(labelGroup);
+
+    // Size the background rect after text is rendered
+    requestAnimationFrame(() => {
+      const bb = text.getBBox();
+      rect.setAttribute('x', bb.x - 6);
+      rect.setAttribute('y', bb.y - 3);
+      rect.setAttribute('width', bb.width + 12);
+      rect.setAttribute('height', bb.height + 6);
+    });
+  });
+}, 50);
+</script>
+</body>
+</html>

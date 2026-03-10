@@ -4,6 +4,7 @@ const User = {
   // 根据用户名查找用户
   findByUsername: async (username) => {
     const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+    console.log('rows[0]:', rows[0]);
     return rows[0]; // 返回第一条，没找到就是 undefined
   },
 

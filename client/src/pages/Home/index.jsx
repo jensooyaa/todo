@@ -105,6 +105,11 @@ export default function Home() {
 
   const totalPages = Math.ceil(total / filters.pageSize);
   const activeCategory = categories.find((c) => String(c.id) === filters.categoryId);
+  const statusMap = { '': '全部任务', '0': '进行中', '1': '已完成' };
+  const getTitle = () => {
+    const status = statusMap[filters.completed];
+    return activeCategory ? `${activeCategory.name} · ${status}` : status;
+  };
 
   if (!user) return null;
 
@@ -198,7 +203,7 @@ export default function Home() {
       <main className="main-content">
         <div className="main-toolbar">
           <div className="toolbar-left">
-            <h2>{activeCategory ? activeCategory.name : '全部任务'}</h2>
+            <h2>{getTitle()}</h2>
             <span className="task-count">{total} 个任务</span>
           </div>
           <div className="toolbar-right">
