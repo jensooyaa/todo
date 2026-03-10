@@ -10,7 +10,7 @@ const todoController = {
       }
       const result = await Todo.findByUserId(userId, {
         categoryId,
-        completed: completed !== undefined ? Number(completed) : undefined,
+        completed: completed !== undefined && completed !== '' ? Number(completed) : undefined,
         keyword,
         page: Number(page) || 1,
         pageSize: Number(pageSize) || 10,
