@@ -6,6 +6,8 @@ const userRoutes = require('./routes/user');
 const categoryRoutes = require('./routes/category');
 const todoRoutes = require('./routes/todo');
 const subtaskRoutes = require('./routes/subtask');
+const tagRoutes = require('./routes/tag');
+const commentRoutes = require('./routes/comment');
 
 const app = express();
 
@@ -18,6 +20,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api', subtaskRoutes);
+app.use('/api/tags', tagRoutes);
+app.use('/api/comments', commentRoutes);
 
 // 健康检查接口 - 用来测试服务器是否正常运行
 app.get('/api/health', (req, res) => {
