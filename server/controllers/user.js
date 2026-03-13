@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 const SALT_ROUNDS = 10;
@@ -52,6 +53,19 @@ const userController = {
       if (!isMatch) {
         return res.status(400).json({ message: '用户名或密码错误' });
       }
+
+      // 生成 JWT token
+      const token = jwt.sign(
+        { userId: user.id, username: user.username },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+      // 将 token 写入 httpOnly cookie
+      res.cookie('JWT', token, {
+        httpOnly: true,  // JS 无法读取，防 XSS
+        maxAge: Number(process.env.COOKIE_MAX_AGE) || 86400000,
+        sameSite: 'lax',
+      });
 
       res.json({ message: '登录成功', userId: user.id, username: user.username });
     } catch (error) {
