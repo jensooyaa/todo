@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTodos, createTodo, toggleTodo, deleteTodo } from '../../api/todo';
+import { getTodos, createTodo, updateTodo, toggleTodo, deleteTodo } from '../../api/todo';
 import { getCategories, createCategory, deleteCategory } from '../../api/category';
 import TodoItem from '../../components/TodoItem';
 import './index.css';
@@ -73,6 +73,15 @@ export default function Home() {
   const handleToggle = async (id, completed) => {
     await toggleTodo(id, { completed: completed ? 0 : 1 });
     fetchTodos();
+  };
+
+  const handleEdit = async (id, data) => {
+    try {
+      await updateTodo(id, data);
+      fetchTodos();
+    } catch (error) {
+      console.error('编辑失败', error);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -285,7 +294,9 @@ export default function Home() {
                 key={todo.id}
                 todo={todo}
                 user={user}
+                categories={categories}
                 onToggle={handleToggle}
+                onEdit={handleEdit}
                 onDelete={handleDelete}
               />
             ))

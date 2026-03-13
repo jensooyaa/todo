@@ -6,8 +6,15 @@ import './TodoItem.css';
 const priorityMap = { high: '高', medium: '中', low: '低' };
 const priorityClass = { high: 'priority-high', medium: 'priority-medium', low: 'priority-low' };
 
-export default function TodoItem({ todo, user, onToggle, onDelete }) {
+export default function TodoItem({ todo, user, categories, onToggle, onEdit, onDelete }) {
   const [expanded, setExpanded] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: todo.title,
+    priority: todo.priority,
+    deadline: todo.deadline ? todo.deadline.slice(0, 10) : '',
+    categoryId: todo.category_id || '',
+  });
   const [subtasks, setSubtasks] = useState([]);
   const [stats, setStats] = useState({ total: 0, completed_count: 0 });
   const [comments, setComments] = useState([]);
@@ -71,6 +78,22 @@ export default function TodoItem({ todo, user, onToggle, onDelete }) {
     fetchComments();
   };
 
+  const handleEditSubmit = () => {
+    if (!editForm.title.trim()) return;
+    onEdit(todo.id, editForm);
+    setEditing(false);
+  };
+
+  const handleEditCancel = () => {
+    setEditForm({
+      title: todo.title,
+      priority: todo.priority,
+      deadline: todo.deadline ? todo.deadline.slice(0, 10) : '',
+      categoryId: todo.category_id || '',
+    });
+    setEditing(false);
+  };
+
   const completionRate = stats.total > 0 ? Math.round((stats.completed_count / stats.total) * 100) : 0;
 
   return (
@@ -103,11 +126,70 @@ export default function TodoItem({ todo, user, onToggle, onDelete }) {
 
         <div className="todo-actions">
           <span className={`expand-arrow ${expanded ? 'open' : ''}`}>▾</span>
+          <button className="todo-edit" onClick={(e) => { e.stopPropagation(); setEditing(!editing); setExpanded(true); }}>
+            ✏️
+          </button>
           <button className="todo-delete" onClick={(e) => { e.stopPropagation(); onDelete(todo.id); }}>
             🗑
           </button>
         </div>
       </div>
+
+      {/* 编辑表单 */}
+      {editing && (
+        <div className="todo-edit-form">
+          <div className="edit-row">
+            <input
+              type="text"
+              value={editForm.title}
+              onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              placeholder="任务标题"
+              autoFocus
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+          <div className="edit-row edit-options">
+            <div className="edit-group">
+              <label>优先级</label>
+              <select
+                value={editForm.priority}
+                onChange={(e) => setEditForm({ ...editForm, priority: e.target.value })}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <option value="low">低</option>
+                <option value="medium">中</option>
+                <option value="high">高</option>
+              </select>
+            </div>
+            <div className="edit-group">
+              <label>截止日期</label>
+              <input
+                type="date"
+                value={editForm.deadline}
+                onChange={(e) => setEditForm({ ...editForm, deadline: e.target.value })}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+            <div className="edit-group">
+              <label>分类</label>
+              <select
+                value={editForm.categoryId}
+                onChange={(e) => setEditForm({ ...editForm, categoryId: e.target.value })}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <option value="">无分类</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="edit-actions">
+              <button className="edit-save" onClick={handleEditSubmit}>保存</button>
+              <button className="edit-cancel" onClick={handleEditCancel}>取消</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 展开内容 */}
       {expanded && (
