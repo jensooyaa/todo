@@ -45,7 +45,7 @@ const userController = {
       // 查找用户
       const user = await User.findByUsername(username);
       if (!user) {
-        return res.status(400).json({ message: '用户名和密码不能为空' });
+        return res.status(400).json({ message: '用户不存在' });
       }
 
       // 验证密码（bcrypt 比对）
